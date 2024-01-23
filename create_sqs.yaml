@@ -1,0 +1,72 @@
+# aws cloudformation create-stack --stack-name bunnyStackQueue --template-body file://create_sqs.yaml --parameters ParameterKey=QueueName,ParameterValue=bunnyQueue --region ap-south-1
+
+# aws cloudformation update-stack --stack-name naugsStackQueue --template-body file://assignment-1/create_sqs.yaml --parameters ParameterKey=QueueName,ParameterValue=bunnyQueue --region ap-south-1
+
+# aws cloudformation update-stack --stack-name naugsStackQueue --template-body file://assignment-1/create_sns.yaml --parameters ParameterKey=TopicName,ParameterValue=naugsSns  ParameterKey=SubscriptionProtocol,ParameterValue=sqs ParameterKey=DisplayName,ParameterValue=naugsSns ParameterKey=QueueName,ParameterValue=bunnyQueue --capabilities CAPABILITY_IAM --region ap-south-1
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Create an SQS Queue with SNS and SQS Receive Permissions"
+
+Parameters:
+    QueueName:
+        Type: String
+        Description: "Name of the SQS queue"
+        MinLength: 1
+        MaxLength: 80
+        Default: "mediator-queue-sns-lambda"
+
+    VisibilityTimeout:
+        Type: Number
+        Description: "Duration (in seconds) that the received messages are hidden from other consumers."
+        MinValue: 0
+        Default: 30
+
+    MaximumMessageSize:
+        Type: Number
+        Description: "Maximum message size in bytes."
+        MinValue: 1024
+        MaxValue: 262144
+        Default: 262144
+
+Resources:
+    MyQueue:
+        Type: AWS::SQS::Queue
+        Properties:
+            QueueName: !Ref QueueName
+            VisibilityTimeout: !Ref VisibilityTimeout
+            MaximumMessageSize: !Ref MaximumMessageSize
+            KmsMasterKeyId: !ImportValue "KmsKeyArn"
+
+    MyQueuePolicy:
+        Type: AWS::SQS::QueuePolicy
+        Properties:
+            PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service:
+                              - "sns.amazonaws.com"
+                              - "sqs.amazonaws.com"
+                      Action:
+                          - "sqs:SendMessage"
+                          - "sqs:SendMessageBatch"
+                      Resource: !GetAtt MyQueue.Arn
+            Queues:
+                - !Ref MyQueue
+
+Outputs:
+    SourceQueueURL:
+        Description: "URL of source queue"
+        Value:
+            Ref: "MyQueue"
+        Export:
+            Name: "QUEUEURL"
+    SourceQueueARN:
+        Description: "ARN of source queue"
+        Value:
+            Fn::GetAtt:
+                - "MyQueue"
+                - "Arn"
+        Export:
+            Name: "QUEUEARN"

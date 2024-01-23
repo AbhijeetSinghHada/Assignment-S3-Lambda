@@ -1,0 +1,73 @@
+Parameters:
+    BucketName:
+        Type: String
+        Description: Name of the S3 bucket to create
+        Default: sns-message-logs-2024
+    SQSQueueName:
+        Type: String
+        Description: Name of the SQS queue to create
+        Default: mediator-queue-sns-lambda
+    SNSTopicARN:
+        Type: String
+        Description: Name of the SNS Topic to create
+        Default: sns-topic-sns-lambda
+
+Resources:
+    S3KmsKey:
+        Type: "AWS::KMS::Key"
+        Properties:
+            Description: An symmetric encryption KMS key
+            EnableKeyRotation: true
+            PendingWindowInDays: 20
+            KeyPolicy:
+                Version: 2012-10-17
+                Id: key-kms-s3-sqs
+                Statement:
+                    - Sid: Allow SNS Topic to use the key
+                      Effect: Allow
+                      Principal:
+                          Service: sns.amazonaws.com
+                      Action:
+                          - "kms:DescribeKey"
+                          - "kms:Encrypt"
+                          - "kms:Decrypt"
+                          - "kms:ReEncrypt*"
+                          - "kms:GenerateDataKey"
+                          - "kms:GenerateDataKeyWithoutPlaintext"
+
+                      Resource: "*"
+                      Condition:
+                          StringEquals:
+                              kms:ViaService: "sns.ap-south-1.amazonaws.com"
+                              kms:CallerAccount: !Ref "AWS::AccountId"
+                    - Sid: Enable IAM User Permissions
+                      Effect: Allow
+                      Principal:
+                          AWS: !Ref "AWS::AccountId"
+                      Action: "kms:*"
+                      Resource: "*"
+                    - Sid: Allow use of the key
+                      Effect: Allow
+                      Principal:
+                          AWS: !Ref "AWS::AccountId"
+                      Action:
+                          - "kms:DescribeKey"
+                          - "kms:Encrypt"
+                          - "kms:Decrypt"
+                          - "kms:ReEncrypt*"
+                          - "kms:GenerateDataKey"
+                          - "kms:GenerateDataKeyWithoutPlaintext"
+                      Resource: "*"
+
+    KmsKeyAlias:
+        Type: "AWS::KMS::Alias"
+        Properties:
+            AliasName: alias/kms-s3-sns
+            TargetKeyId: !Ref S3KmsKey
+
+Outputs:
+    S3KmsKeyArn:
+        Description: "Arn of the KMS Key"
+        Value: !GetAtt S3KmsKey.Arn
+        Export:
+            Name: "KmsKeyArn"

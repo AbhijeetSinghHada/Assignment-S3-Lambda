@@ -1,0 +1,41 @@
+Parameters:
+    BucketName:
+        Type: String
+        Description: "Name of the Log Bucket"
+        MinLength: 1
+        MaxLength: 80
+        Default: "sns-message-logs-2024"
+
+Resources:
+    LogsBucket:
+        Type: AWS::S3::Bucket
+        Properties:
+            BucketEncryption:
+                ServerSideEncryptionConfiguration:
+                    - ServerSideEncryptionByDefault:
+                          SSEAlgorithm: aws:kms
+                          KMSMasterKeyID: !ImportValue "KmsKeyArn"
+            BucketName: !Ref BucketName
+            LifecycleConfiguration:
+                Rules:
+                    - Id: LogsRetention
+                      Prefix: log
+                      Status: Enabled
+                      ExpirationInDays: 1
+            Tags:
+                - Key: Requirement
+                  Value: SnsMessagesLogging
+                - Key: Type
+                  Value: Logs
+
+Outputs:
+    BucketName:
+        Description: "Name of the Log Bucket"
+        Value: !Ref BucketName
+        Export:
+            Name: "BucketName"
+    BucketArn:
+        Description: "Arn of the Log Bucket"
+        Value: !GetAtt LogsBucket.Arn
+        Export:
+            Name: "BucketArn"

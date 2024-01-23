@@ -1,0 +1,44 @@
+# aws cloudformation create-stack --stack-name bunnyStackSns --template-body file://create_sns.yaml --parameters ParameterKey=TopicName,ParameterValue=bunnySns ParameterKey=SubscriptionProtocol,ParameterValue=sqs ParameterKey=DisplayName,ParameterValue=bunnySns --capabilities CAPABILITY_IAM --region ap-south-1
+
+# aws cloudformation update-stack --stack-name naugsStackSns --template-body file://assignment-1/create_sns.yaml --parameters ParameterKey=TopicName,ParameterValue=bunnySns  ParameterKey=SubscriptionProtocol,ParameterValue=sqs ParameterKey=DisplayName,ParameterValue=bunnySns ParameterKey=QueueName,ParameterValue=naugsQueue --capabilities CAPABILITY_IAM --region ap-south-1
+
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+    TopicName:
+        Type: String
+        Description: The name of the SNS topic to create
+    SubscriptionProtocol:
+        Type: String
+        Default: "sqs"
+        AllowedValues:
+            - "email"
+            - "sms"
+            - "lambda"
+            - "sqs"
+        Description: The protocol for subscriptions to the topic
+    DisplayName:
+        Type: String
+        Description: The display name for the topic
+
+Resources:
+    SNSTOPIC:
+        Type: AWS::SNS::Topic
+        Properties:
+            TopicName: !Ref TopicName
+            DisplayName: !Ref DisplayName
+            KmsMasterKeyId: !ImportValue KmsKeyArn
+
+    MySubscription:
+        Type: AWS::SNS::Subscription
+        Properties:
+            Endpoint: !ImportValue QUEUEARN
+            Protocol: !Ref SubscriptionProtocol
+            TopicArn: !Ref SNSTOPIC
+
+Outputs:
+    TopicArn:
+        Value: !Ref SNSTOPIC
+        Description: ARN of the SNS topic
+    QueueURL:
+        Value: !ImportValue QUEUEURL
+        Description: URL of the SQS queue

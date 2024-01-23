@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Amazon API Gateway to AWS Lambda to Amazon DynamoDB
+Parameters:
+    LambdaLoggerS3Name:
+        Type: String
+        Description: Name of the Lambda function
+        Default: logToS3Function
+Resources:
+    LambdaLoggerS3:
+        Type: AWS::Serverless::Function
+        Properties:
+            FunctionName: !Ref LambdaLoggerS3Name
+            Handler: log_to_s3.lambda_handler
+            Runtime: python3.12
+            CodeUri: src/
+            LoggingConfig:
+                LogGroup:
+                    !Join [
+                        "",
+                        ["/aws/lambda/", Ref: LambdaLoggerS3Name, "-latest"],
+                    ]
+            Policies:
+                - Version: "2012-10-17"
+                  Statement:
+                      - Effect: Allow
+                        Action:
+                            - s3:GetObject
+                            - s3:ListBucket
+                            - s3:PutObject
+                        Resource: "*"
+                      - Effect: Allow
+                        Action:
+                            - "kms:DescribeKey"
+                            - "kms:Encrypt"
+                            - "kms:Decrypt"
+                            - "kms:ReEncrypt*"
+                            - "kms:GenerateDataKey"
+                            - "kms:GenerateDataKeyWithoutPlaintext"
+                        Resource: !ImportValue KmsKeyArn
+            Events:
+                SQSEvent:
+                    Type: SQS
+                    Properties:
+                        Queue: !ImportValue QUEUEARN
+                        BatchSize: 1
+                        Enabled: true
+            Environment:
+                Variables:
+                    BUCKET_NAME: !ImportValue BucketName
+    LambdaLoggerS3LogGroup:
+        Type: AWS::Logs::LogGroup
+        Properties:
+            LogGroupName:
+                !Join ["", ["/aws/lambda/", Ref: LambdaLoggerS3Name, "-latest"]]
+            RetentionInDays: 3
+
+Outputs:
+    LogToS3Function:
+        Description: "Lambda Function ARN"
+        Value: !GetAtt LambdaLoggerS3.Arn
+        Export:
+            Name: "LogToS3Function"
