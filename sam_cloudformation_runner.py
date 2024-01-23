@@ -109,21 +109,37 @@ def create_sns_topic(sns_topic_name, sns_topic_display_name):
     print(response)
     return response
 
-# def create_lambda_function(lambda_function_name):
-#     os.system("sam deploy --stack-name lambda-function-stack --template --region ap-south-1")
+def create_lambda_excecution_role():
+    client_cf = boto3.client('cloudformation')
+    cf_template = open('iam_policy.yaml').read()
+
+    response = client_cf.create_stack(
+        StackName='lambda-execution-role-stack',
+        TemplateBody = cf_template,
+        Capabilities=[
+            'CAPABILITY_IAM',
+            'CAPABILITY_NAMED_IAM'
+        ],
+    )
+    print("Waiting for Lambda Execution Role stack to be created...")
+    waiter = client_cf.get_waiter('stack_create_complete')
+    waiter.wait(
+        StackName='lambda-execution-role-stack'
+    )
+    print(response)
+    return response
 
 
 if __name__ == '__main__':
     bucket_name = 'sns-message-logs-2024'
     sqs_queue_name = 'mediator-queue-sns-lambda'
     # kms_key_generate(bucket_name, sqs_queue_name)
-    create_s3_bucket(bucket_name)
-
+    # create_s3_bucket(bucket_name)
     # sns_topic_name = 'sns-topic-sns-lambda'
     # sns_topic_display_name = 'SNS Topic for Lambda'
     # create_sqs_queue(sqs_queue_name)
     # create_sns_topic(sns_topic_name, sns_topic_display_name)
-    # lambda_function_name = 'logToS3Function'
-    # create_lambda_function(lambda_function_name)
+    create_lambda_excecution_role()
+
 
 

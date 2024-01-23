@@ -20,24 +20,7 @@ Resources:
                         "",
                         ["/aws/lambda/", Ref: LambdaLoggerS3Name, "-latest"],
                     ]
-            Policies:
-                - Version: "2012-10-17"
-                  Statement:
-                      - Effect: Allow
-                        Action:
-                            - s3:GetObject
-                            - s3:ListBucket
-                            - s3:PutObject
-                        Resource: "*"
-                      - Effect: Allow
-                        Action:
-                            - "kms:DescribeKey"
-                            - "kms:Encrypt"
-                            - "kms:Decrypt"
-                            - "kms:ReEncrypt*"
-                            - "kms:GenerateDataKey"
-                            - "kms:GenerateDataKeyWithoutPlaintext"
-                        Resource: !ImportValue KmsKeyArn
+            Role: !ImportValue LambdaIAMRoleArn
             Events:
                 SQSEvent:
                     Type: SQS
@@ -61,3 +44,9 @@ Outputs:
         Value: !GetAtt LambdaLoggerS3.Arn
         Export:
             Name: "LogToS3Function"
+
+    LogGroup:
+        Description: "Log Group ARN"
+        Value: !GetAtt LambdaLoggerS3LogGroup.Arn
+        Export:
+            Name: "LambdaLogGroupArn"

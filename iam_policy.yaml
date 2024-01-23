@@ -1,0 +1,71 @@
+# aws cloudformation create-stack --stack-name lambda-iam-role --template-body file://iam_policy.yaml --capabilities CAPABILITY_IAM
+
+Resources:
+    LambdaIAMRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service:
+                              - lambda.amazonaws.com
+                      Action:
+                          - sts:AssumeRole
+            RoleName: required-lambda-execution-roles
+            Policies:
+                - PolicyName: CloudWatchLogsPolicy
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - logs:CreateLogStream
+                                - logs:PutLogEvents
+                            Resource: "*"
+                - PolicyName: S3Policy
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - s3:GetObject
+                                - s3:PutObject
+                            Resource: !Join ["", [!ImportValue BucketArn, "/*"]]
+                - PolicyName: KmsPolicy
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - kms:DescribeKey
+                                - kms:Encrypt
+                                - kms:Decrypt
+                                - kms:ReEncrypt*
+                                - kms:GenerateDataKey
+                                - kms:GenerateDataKeyWithoutPlaintext
+                            Resource: !ImportValue KmsKeyArn
+                - PolicyName: SQSExecutionPolicy
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - sqs:ReceiveMessage
+                                - sqs:DeleteMessage
+                                - sqs:GetQueueAttributes
+
+                            Resource: !ImportValue QUEUEARN
+
+Outputs:
+    LambdaIAMRoleArn:
+        Description: "ARN of the IAM role"
+        Value: !GetAtt LambdaIAMRole.Arn
+        Export:
+            Name: "LambdaIAMRoleArn"
+    LambdaIAMRoleName:
+        Description: "Name of the IAM role"
+        Value: !Ref LambdaIAMRole
+        Export:
+            Name: "LambdaIAMRoleName"

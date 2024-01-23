@@ -36,10 +36,6 @@ Resources:
                           - "kms:GenerateDataKeyWithoutPlaintext"
 
                       Resource: "*"
-                      Condition:
-                          StringEquals:
-                              kms:ViaService: "sns.ap-south-1.amazonaws.com"
-                              kms:CallerAccount: !Ref "AWS::AccountId"
                     - Sid: Enable IAM User Permissions
                       Effect: Allow
                       Principal:
