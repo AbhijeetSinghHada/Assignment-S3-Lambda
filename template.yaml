@@ -31,6 +31,11 @@ Resources:
             Environment:
                 Variables:
                     BUCKET_NAME: !ImportValue BucketName
+            Tags:
+                - Key: Requirement
+                  Value: SnsMessagesLogging
+                - Key: Type
+                  Value: Logs
     LambdaLoggerS3LogGroup:
         Type: AWS::Logs::LogGroup
         Properties:

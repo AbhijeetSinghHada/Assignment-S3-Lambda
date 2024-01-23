@@ -18,7 +18,12 @@ Resources:
         Properties:
             Description: An symmetric encryption KMS key
             EnableKeyRotation: true
-            PendingWindowInDays: 20
+            PendingWindowInDays: 7
+            Tags:
+                - Key: Requirement
+                  Value: EncryptionForS3SNSSQS
+                - Key: Type
+                  Value: KMS
             KeyPolicy:
                 Version: 2012-10-17
                 Id: key-kms-s3-sqs
