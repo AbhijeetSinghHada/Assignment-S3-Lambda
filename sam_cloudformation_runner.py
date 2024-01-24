@@ -1,5 +1,4 @@
 import boto3
-import pathlib
 
 def kms_key_generate(bucket_name, sqs_queue_name):
     client_cf = boto3.client('cloudformation')
@@ -133,12 +132,12 @@ def create_lambda_excecution_role():
 if __name__ == '__main__':
     bucket_name = 'sns-message-logs-2024'
     sqs_queue_name = 'mediator-queue-sns-lambda'
-    # kms_key_generate(bucket_name, sqs_queue_name)
-    # create_s3_bucket(bucket_name)
-    # sns_topic_name = 'sns-topic-sns-lambda'
-    # sns_topic_display_name = 'SNS Topic for Lambda'
-    # create_sqs_queue(sqs_queue_name)
-    # create_sns_topic(sns_topic_name, sns_topic_display_name)
+    kms_key_generate(bucket_name, sqs_queue_name)
+    create_s3_bucket(bucket_name)
+    sns_topic_name = 'sns-topic-sns-lambda'
+    sns_topic_display_name = 'SNS Topic for Lambda'
+    create_sqs_queue(sqs_queue_name)
+    create_sns_topic(sns_topic_name, sns_topic_display_name)
     create_lambda_excecution_role()
 
 

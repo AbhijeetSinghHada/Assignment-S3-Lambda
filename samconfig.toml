@@ -1,9 +1,10 @@
 version = 0.1
 [default.deploy.parameters]
-stack_name = "bunnySamStack"
+stack_name = "sam-lambda-app"
 resolve_s3 = true
-s3_prefix = "bunnySamStack"
+s3_prefix = "sam-lambda-app"
 region = "ap-south-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
+parameter_overrides = "LambdaLoggerS3Name=\"logToS3Function\""
 image_repositories = []
